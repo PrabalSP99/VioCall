@@ -18,7 +18,15 @@ echo "⚙️ Creating production environment..."
 cat > .env.production << EOF
 NODE_ENV=production
 PORT=5000
-CLIENT_URL=https://your-vercel-domain.vercel.app
+CLIENT_URL=https://meet-video-umber.vercel.app
+EOF
+
+# Create client production environment file
+echo "⚙️ Creating client production environment..."
+cat > client/.env.production << EOF
+REACT_APP_SERVER_URL=https://meet-video-umber.vercel.app
+REACT_APP_ENV=production
+NODE_ENV=production
 EOF
 
 echo "✅ Build completed successfully!"
