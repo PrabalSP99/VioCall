@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        video {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 10px;
+            margin: 1rem 0;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5a6fd8;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WebRTC Test</h1>
+        <p>This page tests basic WebRTC functionality to ensure your browser supports video calling.</p>
+        
+        <div class="status">
+            <h3>Browser Compatibility Check</h3>
+            <div id="compatibility"></div>
+        </div>
+
+        <div class="container">
+            <h3>Camera Test</h3>
+            <video id="localVideo" autoplay muted playsinline></video>
+            <div>
+                <button id="startButton">Start Camera</button>
+                <button id="stopButton" disabled>Stop Camera</button>
+            </div>
+        </div>
+
+        <div class="container">
+            <h3>Connection Test</h3>
+            <p>Testing connection to the video calling server...</p>
+            <div id="connectionStatus"></div>
+        </div>
+    </div>
+
+    <script>
+        // Check WebRTC compatibility
+        function checkCompatibility() {
+            const compatibility = document.getElementById('compatibility');
+            let html = '<ul>';
+            
+            // Check getUserMedia
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                html += '<li>✅ getUserMedia API: Supported</li>';
+            } else {
+                html += '<li>❌ getUserMedia API: Not supported</li>';
+            }
+            
+            // Check RTCPeerConnection
+            if (window.RTCPeerConnection) {
+                html += '<li>✅ RTCPeerConnection: Supported</li>';
+            } else {
+                html += '<li>❌ RTCPeerConnection: Not supported</li>';
+            }
+            
+            // Check WebSocket
+            if (window.WebSocket) {
+                html += '<li>✅ WebSocket: Supported</li>';
+            } else {
+                html += '<li>❌ WebSocket: Not supported</li>';
+            }
+            
+            html += '</ul>';
+            compatibility.innerHTML = html;
+        }
+
+        // Test camera access
+        let localStream = null;
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        const localVideo = document.getElementById('localVideo');
+
+        startButton.addEventListener('click', async () => {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: true
+                });
+                localVideo.srcObject = localStream;
+                startButton.disabled = true;
+                stopButton.disabled = false;
+            } catch (error) {
+                console.error('Error accessing media devices:', error);
+                alert('Error accessing camera/microphone: ' + error.message);
+            }
+        });
+
+        stopButton.addEventListener('click', () => {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localVideo.srcObject = null;
+                startButton.disabled = false;
+                stopButton.disabled = true;
+            }
+        });
+
+        // Test server connection
+        async function testServerConnection() {
+            const statusDiv = document.getElementById('connectionStatus');
+            try {
+                const response = await fetch('http://localhost:5000/api/health');
+                if (response.ok) {
+                    const data = await response.json();
+                    statusDiv.innerHTML = `
+                        <div style="color: #4CAF50;">
+                            ✅ Server connection successful!<br>
+                            Status: ${data.status}<br>
+                            Message: ${data.message}
+                        </div>
+                    `;
+                } else {
+                    statusDiv.innerHTML = `
+                        <div style="color: #f44336;">
+                            ❌ Server connection failed<br>
+                            Status: ${response.status} ${response.statusText}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div style="color: #f44336;">
+                        ❌ Server connection error<br>
+                        Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Initialize tests
+        checkCompatibility();
+        testServerConnection();
+    </script>
+</body>
+</html>
