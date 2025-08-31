@@ -17,6 +17,67 @@ const VideoRoom = ({ roomId, username, onLeaveRoom }) => {
   const localVideoRef = useRef();
   const peerConnectionsRef = useRef(new Map());
 
+  // Define functions with useCallback to avoid dependency issues
+  const createOffer = useCallback(async (pc, peerId) => {
+    try {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      socket?.emit('offer', {
+        target: peerId,
+        offer: offer
+      });
+    } catch (error) {
+      console.error('Error creating offer:', error);
+    }
+  }, [socket]);
+
+  const handleOffer = useCallback(async (data) => {
+    const pc = peerConnectionsRef.current.get(data.from);
+    if (pc) {
+      try {
+        await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket?.emit('answer', {
+          target: data.from,
+          answer: answer
+        });
+      } catch (error) {
+        console.error('Error handling offer:', error);
+      }
+    }
+  }, [socket]);
+
+  const handleAnswer = useCallback(async (data) => {
+    const pc = peerConnectionsRef.current.get(data.from);
+    if (pc) {
+      try {
+        await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+      } catch (error) {
+        console.error('Error handling answer:', error);
+      }
+    }
+  }, []);
+
+  const handleIceCandidate = useCallback(async (data) => {
+    const pc = peerConnectionsRef.current.get(data.from);
+    if (pc) {
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+      } catch (error) {
+        console.error('Error adding ICE candidate:', error);
+      }
+    }
+  }, []);
+
+  const removePeerConnection = useCallback((peerId) => {
+    const pc = peerConnectionsRef.current.get(peerId);
+    if (pc) {
+      pc.close();
+      peerConnectionsRef.current.delete(peerId);
+    }
+  }, []);
+
   // Initialize local media stream
   useEffect(() => {
     const initializeMedia = async () => {
@@ -42,7 +103,7 @@ const VideoRoom = ({ roomId, username, onLeaveRoom }) => {
         localStream.getTracks().forEach(track => track.stop());
       }
     };
-  }, [localStream]);
+  }, [localStream]); // Add localStream dependency for cleanup
 
   // Join room when socket is connected
   useEffect(() => {
@@ -91,7 +152,8 @@ const VideoRoom = ({ roomId, username, onLeaveRoom }) => {
         socket.off('chat-message');
       }
     };
-  }, [socket, isConnected, roomId, username, createPeerConnection, handleOffer]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [socket, isConnected, roomId, username, handleOffer, handleAnswer, handleIceCandidate]);
 
   const createPeerConnection = useCallback((peerId) => {
     const pc = new RTCPeerConnection({
@@ -127,7 +189,6 @@ const VideoRoom = ({ roomId, username, onLeaveRoom }) => {
     };
 
     peerConnectionsRef.current.set(peerId, pc);
-    setPeerConnections(new Map(peerConnectionsRef.current));
 
     // Create and send offer if we're the initiator
     if (participants.length > 0) {
@@ -135,66 +196,7 @@ const VideoRoom = ({ roomId, username, onLeaveRoom }) => {
     }
   }, [localStream, participants.length, socket, createOffer]);
 
-  const createOffer = async (pc, peerId) => {
-    try {
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      socket.emit('offer', {
-        target: peerId,
-        offer: offer
-      });
-    } catch (error) {
-      console.error('Error creating offer:', error);
-    }
-  };
 
-  const handleOffer = async (data) => {
-    const pc = peerConnectionsRef.current.get(data.from);
-    if (pc) {
-      try {
-        await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        socket.emit('answer', {
-          target: data.from,
-          answer: answer
-        });
-      } catch (error) {
-        console.error('Error handling offer:', error);
-      }
-    }
-  };
-
-  const handleAnswer = async (data) => {
-    const pc = peerConnectionsRef.current.get(data.from);
-    if (pc) {
-      try {
-        await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
-      } catch (error) {
-        console.error('Error handling answer:', error);
-      }
-    }
-  };
-
-  const handleIceCandidate = async (data) => {
-    const pc = peerConnectionsRef.current.get(data.from);
-    if (pc) {
-      try {
-        await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-      } catch (error) {
-        console.error('Error adding ICE candidate:', error);
-      }
-    }
-  };
-
-  const removePeerConnection = (peerId) => {
-    const pc = peerConnectionsRef.current.get(peerId);
-    if (pc) {
-      pc.close();
-      peerConnectionsRef.current.delete(peerId);
-      setPeerConnections(new Map(peerConnectionsRef.current));
-    }
-  };
 
   const toggleVideo = () => {
     if (localStream) {

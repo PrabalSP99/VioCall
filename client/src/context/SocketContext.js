@@ -16,14 +16,8 @@ export const SocketProvider = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    const serverUrl = process.env.REACT_APP_SERVER_URL || 
-      (process.env.NODE_ENV === 'production' 
-        ? window.location.origin  // Use same domain for VPS deployment
-        : 'http://localhost:5000');
-    const newSocket = io(serverUrl, {
+    const newSocket = io(process.env.REACT_APP_SERVER_URL || window.location.origin, {
       transports: ['websocket', 'polling'],
-      upgrade: true,
-      rememberUpgrade: true,
       timeout: 20000,
       forceNew: true
     });

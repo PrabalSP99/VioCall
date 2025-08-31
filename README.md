@@ -88,6 +88,30 @@ npm run build
 npm start
 ```
 
+## 🚀 Deployment
+
+### Vercel Deployment (Recommended)
+
+#### Prerequisites
+- Vercel CLI: `npm install -g vercel`
+- Vercel account: [vercel.com](https://vercel.com)
+
+#### Quick Deploy
+```bash
+# Build and deploy to Vercel
+./deploy-vercel.sh
+
+# Or manually:
+./build-vercel.sh
+vercel --prod
+```
+
+#### Environment Variables (Vercel Dashboard)
+- `NODE_ENV`: `production`
+- `CLIENT_URL`: `https://your-domain.vercel.app`
+
+For detailed deployment instructions, see [VERCEL-DEPLOYMENT.md](./VERCEL-DEPLOYMENT.md)
+
 ## Usage
 
 1. **Open the application** in your browser at `http://localhost:3000`
@@ -173,24 +197,7 @@ The application uses WebRTC for peer-to-peer video communication:
 4. Add tests if applicable
 5. Submit a pull request
 
-## 🚀 Deployment
 
-### VPS Deployment (Recommended)
-For production deployment on VPS with Nginx, see [VPS-DEPLOYMENT.md](./VPS-DEPLOYMENT.md) for detailed instructions.
-
-### Cloud Platform Deployment
-For cloud platform deployment, see [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions.
-
-### Quick Deploy Options:
-- **VPS**: Nginx + PM2 (recommended for production)
-- **Frontend**: Deploy to Vercel
-- **Backend**: Deploy to Railway or Render
-- **Full Stack**: Use the provided deployment configurations
-
-### Production Build:
-```bash
-./build-production.sh
-```
 
 ## License
 
