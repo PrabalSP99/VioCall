@@ -91,7 +91,7 @@ io.on('connection', (socket) => {
           rooms.delete(roomId);
         } else {
           // Notify others that user left
-          socket.to(roomId).emit('user-left', { userId: user.userId, username: user.username });
+          socket.to(roomId).emit('user-left', { userId: user.userId, username: user.username, socketId: socket.id });
         }
       }
       users.delete(socket.id);
@@ -125,9 +125,15 @@ app.get('/api/rooms/:roomId/participants', (req, res) => {
 });
 
 // Serve React app for all other routes (production only)
+if (process.env.NODE_ENV === 'production') {
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/build/index.html'));
+  });
+} else {
   app.get('/', (req, res) => {
     res.json({ status: 'OK', message: 'Video calling server is running' });
   });
+}
 
 
 const PORT = process.env.PORT || 5000;
