@@ -1,9 +1,9 @@
 // Server configuration for different environments
 const config = {
   development: {
-    serverUrl: process.env.REACT_APP_SERVER_URL || 'http://localhost:5000',
-    apiUrl: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
-    socketUrl: process.env.REACT_APP_SOCKET_URL || 'ws://localhost:5000'
+    serverUrl: process.env.REACT_APP_SERVER_URL ,
+    apiUrl: process.env.REACT_APP_API_URL ,
+    socketUrl: process.env.REACT_APP_SOCKET_URL
   },
   production: {
     serverUrl: process.env.REACT_APP_SERVER_URL || window.location.origin,
